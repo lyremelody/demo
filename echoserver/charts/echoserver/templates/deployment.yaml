@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "echoserver.fullname" . }}
+  labels:
+{{ include "echoserver.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "echoserver.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "echoserver.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: echoserver
+          {{- if .Values.image.registry}}
+          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          {{- else}}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}" 
+          {{- end}}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          env:
+           {{- if .Values.env.timezone}}
+            - name: TZ
+              value: {{ .Values.env.timezone }}
+           {{- end}}
+           {{- if .Values.env.language}}
+            - name: LANG
+              value: {{ .Values.env.language }}
+            {{- end}}
+          volumeMounts:
+            - name: {{ .Release.Name }}-yaml
+              mountPath: /etc/service.yaml
+              subPath: service.yaml
+          livenessProbe:
+            httpGet:
+              path: /health/alive
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: {{ .Release.Name }}-yaml
+          configMap:
+            name: {{ .Release.Name }}-yaml
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

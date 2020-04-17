@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-yaml
+  namespace: {{ .Values.namespace }}
+data:
+  service.yaml: |
+
+    # /etc/service.yaml
+    port: {{ .Values.service.port }}
+    language: {{ .Values.service.language }}
