@@ -1,8 +1,8 @@
 replicaCount: 1
-namespace:
+namespace: demo
 
 image:
-  registry: {}
+  registry: ""
   repository: "echoserver"
   tag: "1.0"
   pullPolicy: IfNotPresent
